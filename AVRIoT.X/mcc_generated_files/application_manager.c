@@ -96,6 +96,8 @@ static void sendToCloud(void)
     int rawTemperature = 0;
     int light = 0;
     int len = 0;    
+	const uint8_t sw0 = SW0_GetValue() != 0;
+
     memset((void*)publishMqttTopic, 0, sizeof(publishMqttTopic));
     sprintf(publishMqttTopic, "%s/sensors", cid);
     // This part runs every CFG_SEND_INTERVAL seconds
@@ -103,7 +105,7 @@ static void sendToCloud(void)
     {
         rawTemperature = SENSORS_getTempValue();
         light = SENSORS_getLightValue();
-        len = sprintf(json,"{\"Light\":%d,\"Temp\":%d.%02d}", light,rawTemperature/100,abs(rawTemperature)%100);
+        len = sprintf(json,"{\"Light\":%d,\"Temp\":%d.%02d,\"Switch 0\":%u}", light,rawTemperature/100,abs(rawTemperature)%100, sw0);
     }
     if (len >0) 
     {
@@ -412,13 +414,13 @@ uint32_t MAIN_dataTask(void *payload)
             {
                 ledParameterGreen.onTime = SOLID_ON;
                 ledParameterGreen.offTime = SOLID_OFF;
-                LED_control(&ledParameterGreen);
+                // LED_control(&ledParameterGreen);
             }
             else if(shared_networking_params.haveDataConnection == 1)
             {
                 ledParameterGreen.onTime = LED_BLINK;
                 ledParameterGreen.offTime = LED_BLINK;
-                LED_control(&ledParameterGreen);
+                // LED_control(&ledParameterGreen);
             }
         }
     }
@@ -435,6 +437,19 @@ uint32_t MAIN_dataTask(void *payload)
         ledParameterRed.onTime = SOLID_OFF;
         ledParameterRed.offTime = SOLID_ON;
         LED_control(&ledParameterRed);
+    }
+
+	if(!getToggleState())
+	{
+		ledParameterGreen.onTime = SOLID_ON;
+        ledParameterGreen.offTime = SOLID_OFF;
+        LED_control(&ledParameterGreen);
+    }
+    else
+    {
+        ledParameterGreen.onTime = SOLID_OFF;
+        ledParameterGreen.offTime = SOLID_ON;
+        LED_control(&ledParameterGreen);
     }
         
     // This is milliseconds managed by the RTC and the scheduler, this return 
